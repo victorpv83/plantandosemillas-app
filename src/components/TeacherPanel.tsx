@@ -63,6 +63,15 @@ export const TeacherPanel: React.FC = () => {
   const [newCluesGrid, setNewCluesGrid] = useState<SemidokuGrid>([]);
   const [selectedBuilderCell, setSelectedBuilderCell] = useState<{ r: number; c: number } | null>(null);
 
+  // Blockly challenge builder state
+  const [blockRows, setBlockRows] = useState<number>(5);
+  const [blockCols, setBlockCols] = useState<number>(5);
+  const [blockStartPos, setBlockStartPos] = useState<{ r: number; c: number; dir: 'up' | 'right' | 'down' | 'left' }>({ r: 0, c: 0, dir: 'right' });
+  const [blockGoalPos, setBlockGoalPos] = useState<{ r: number; c: number }>({ r: 4, c: 4 });
+  const [blockObstacles, setBlockObstacles] = useState<{ r: number; c: number }[]>([{ r: 1, c: 2 }, { r: 2, c: 2 }]);
+  const [blockCollectibles, setBlockCollectibles] = useState<{ r: number; c: number }[]>([{ r: 0, c: 3 }]);
+  const [blockToolMode, setBlockToolMode] = useState<'start' | 'goal' | 'obstacle' | 'gem' | 'clear'>('obstacle');
+
   // New Badge Form
   const [showCreateBadgeModal, setShowCreateBadgeModal] = useState<boolean>(false);
   const [badgeCode, setBadgeCode] = useState<string>('');
@@ -181,12 +190,12 @@ export const TeacherPanel: React.FC = () => {
         block_config:
           newType === 'blockly_code'
             ? {
-                gridRows: 5,
-                gridCols: 5,
-                startPos: { r: 0, c: 0, dir: 'right' },
-                goalPos: { r: 3, c: 4 },
-                obstacles: [{ r: 1, c: 2 }, { r: 2, c: 2 }],
-                collectibles: [{ r: 0, c: 3 }],
+                gridRows: blockRows,
+                gridCols: blockCols,
+                startPos: blockStartPos,
+                goalPos: blockGoalPos,
+                obstacles: blockObstacles,
+                collectibles: blockCollectibles,
               }
             : undefined,
       });
@@ -541,7 +550,10 @@ export const TeacherPanel: React.FC = () => {
                     <th className="py-3.5 px-4">Puntos</th>
                     <th className="py-3.5 px-4">Subnivel</th>
                     <th className="py-3.5 px-4">Retos</th>
+                    <th className="py-3.5 px-4">Tiempo Est.</th>
                     <th className="py-3.5 px-4">Insignias</th>
+                    <th className="py-3.5 px-4">Última Conexión</th>
+                    <th className="py-3.5 px-4">Fecha Alta</th>
                     <th className="py-3.5 px-4">Estado</th>
                     <th className="py-3.5 px-4 text-right">Acciones</th>
                   </tr>
@@ -564,8 +576,17 @@ export const TeacherPanel: React.FC = () => {
                       <td className="py-3.5 px-4 text-slate-700 tabular-nums">
                         {st.completed_challenges_count}
                       </td>
+                      <td className="py-3.5 px-4 text-slate-600 tabular-nums font-mono">
+                        {(st.completed_challenges_count || 0) * 12} min
+                      </td>
                       <td className="py-3.5 px-4 text-slate-700 tabular-nums">
                         {st.badges_count || 0}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500 text-[11px]">
+                        {st.last_login_at ? new Date(st.last_login_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : 'Nunca'}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-400 text-[11px]">
+                        {st.created_at ? new Date(st.created_at).toLocaleDateString('es-ES') : '—'}
                       </td>
                       <td className="py-3.5 px-4">
                         <span
@@ -1200,6 +1221,217 @@ export const TeacherPanel: React.FC = () => {
                         </button>
                       )}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Blockly Maze Builder */}
+              {newType === 'blockly_code' && (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div>
+                      <span className="font-bold text-slate-800">
+                        Editor Visual del Escenario de Navegación
+                      </span>
+                      <p className="text-[11px] text-slate-500">
+                        Selecciona una herramienta y haz clic en las casillas para colocar la salida, meta, obstáculos o gemas.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="text-[11px] font-semibold text-slate-600">Filas:</label>
+                      <input
+                        type="number"
+                        min={3}
+                        max={7}
+                        value={blockRows}
+                        onChange={(e) => setBlockRows(Math.max(3, Math.min(7, Number(e.target.value))))}
+                        className="w-12 px-1.5 py-0.5 border border-slate-300 rounded text-center text-xs"
+                      />
+                      <label className="text-[11px] font-semibold text-slate-600">Cols:</label>
+                      <input
+                        type="number"
+                        min={3}
+                        max={7}
+                        value={blockCols}
+                        onChange={(e) => setBlockCols(Math.max(3, Math.min(7, Number(e.target.value))))}
+                        className="w-12 px-1.5 py-0.5 border border-slate-300 rounded text-center text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Tool Palette */}
+                  <div className="flex flex-wrap items-center gap-2 p-2 bg-white rounded-xl border border-slate-200 text-xs font-bold">
+                    <span className="text-[11px] text-slate-400 uppercase tracking-wider mr-1">Herramienta:</span>
+
+                    <button
+                      type="button"
+                      onClick={() => setBlockToolMode('start')}
+                      className={`px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
+                        blockToolMode === 'start'
+                          ? 'bg-emerald-500 text-white border-emerald-600 shadow-2xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>🚀</span>
+                      <span>Salida Robot</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setBlockToolMode('goal')}
+                      className={`px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
+                        blockToolMode === 'goal'
+                          ? 'bg-amber-500 text-white border-amber-600 shadow-2xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>🏁</span>
+                      <span>Meta</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setBlockToolMode('obstacle')}
+                      className={`px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
+                        blockToolMode === 'obstacle'
+                          ? 'bg-slate-800 text-white border-slate-900 shadow-2xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>🪨</span>
+                      <span>Roca (Obstáculo)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setBlockToolMode('gem')}
+                      className={`px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
+                        blockToolMode === 'gem'
+                          ? 'bg-cyan-500 text-white border-cyan-600 shadow-2xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>💎</span>
+                      <span>Gema (Coleccionable)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setBlockToolMode('clear')}
+                      className={`px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
+                        blockToolMode === 'clear'
+                          ? 'bg-rose-500 text-white border-rose-600 shadow-2xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>⬜</span>
+                      <span>Vaciar</span>
+                    </button>
+
+                    {/* Start direction select */}
+                    <div className="ml-auto flex items-center gap-1.5 text-[11px] text-slate-600">
+                      <span>Mirar hacia:</span>
+                      <select
+                        value={blockStartPos.dir}
+                        onChange={(e) => setBlockStartPos({ ...blockStartPos, dir: e.target.value as any })}
+                        className="px-2 py-1 border border-slate-200 rounded-lg bg-slate-50 text-xs font-semibold"
+                      >
+                        <option value="right">Derecha 👉</option>
+                        <option value="down">Abajo 👇</option>
+                        <option value="left">Izquierda 👈</option>
+                        <option value="up">Arriba 👆</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Interactive Visual Grid */}
+                  <div className="flex justify-center p-3 bg-slate-800 rounded-2xl border-2 border-slate-700">
+                    <div
+                      className="inline-grid gap-2"
+                      style={{ gridTemplateColumns: `repeat(${blockCols}, minmax(0, 1fr))` }}
+                    >
+                      {Array.from({ length: blockRows }).map((_, r) =>
+                        Array.from({ length: blockCols }).map((_, c) => {
+                          const isStart = blockStartPos.r === r && blockStartPos.c === c;
+                          const isGoal = blockGoalPos.r === r && blockGoalPos.c === c;
+                          const isObs = blockObstacles.some((o) => o.r === r && o.c === c);
+                          const isGem = blockCollectibles.some((g) => g.r === r && g.c === c);
+
+                          const handleCellClick = () => {
+                            if (blockToolMode === 'start') {
+                              setBlockStartPos({ ...blockStartPos, r, c });
+                              setBlockObstacles(blockObstacles.filter((o) => !(o.r === r && o.c === c)));
+                              setBlockCollectibles(blockCollectibles.filter((g) => !(g.r === r && g.c === c)));
+                            } else if (blockToolMode === 'goal') {
+                              setBlockGoalPos({ r, c });
+                              setBlockObstacles(blockObstacles.filter((o) => !(o.r === r && o.c === c)));
+                              setBlockCollectibles(blockCollectibles.filter((g) => !(g.r === r && g.c === c)));
+                            } else if (blockToolMode === 'obstacle') {
+                              if (!isStart && !isGoal) {
+                                if (isObs) {
+                                  setBlockObstacles(blockObstacles.filter((o) => !(o.r === r && o.c === c)));
+                                } else {
+                                  setBlockObstacles([...blockObstacles, { r, c }]);
+                                  setBlockCollectibles(blockCollectibles.filter((g) => !(g.r === r && g.c === c)));
+                                }
+                              }
+                            } else if (blockToolMode === 'gem') {
+                              if (!isStart && !isGoal) {
+                                if (isGem) {
+                                  setBlockCollectibles(blockCollectibles.filter((g) => !(g.r === r && g.c === c)));
+                                } else {
+                                  setBlockCollectibles([...blockCollectibles, { r, c }]);
+                                  setBlockObstacles(blockObstacles.filter((o) => !(o.r === r && o.c === c)));
+                                }
+                              }
+                            } else if (blockToolMode === 'clear') {
+                              setBlockObstacles(blockObstacles.filter((o) => !(o.r === r && o.c === c)));
+                              setBlockCollectibles(blockCollectibles.filter((g) => !(g.r === r && g.c === c)));
+                            }
+                          };
+
+                          return (
+                            <button
+                              key={`block-${r}-${c}`}
+                              type="button"
+                              onClick={handleCellClick}
+                              className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold transition-transform hover:scale-105 cursor-pointer relative shadow-xs ${
+                                isStart
+                                  ? 'bg-emerald-500 text-white ring-2 ring-emerald-300'
+                                  : isGoal
+                                  ? 'bg-amber-400 text-amber-950 ring-2 ring-amber-200'
+                                  : isObs
+                                  ? 'bg-slate-700 text-slate-200 border border-slate-600'
+                                  : isGem
+                                  ? 'bg-cyan-100 text-cyan-800 border border-cyan-300'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-400'
+                              }`}
+                              title={`Casilla (${r}, ${c})`}
+                            >
+                              {isStart && '🌱'}
+                              {isGoal && '🏁'}
+                              {isObs && '🪨'}
+                              {isGem && '💎'}
+                              {!isStart && !isGoal && !isObs && !isGem && (
+                                <span className="text-[10px] text-slate-300 select-none">
+                                  {r},{c}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 px-1">
+                    <span>
+                      🌱 Salida: ({blockStartPos.r}, {blockStartPos.c}) · 🏁 Meta: ({blockGoalPos.r}, {blockGoalPos.c})
+                    </span>
+                    <span>
+                      🪨 {blockObstacles.length} obstáculos · 💎 {blockCollectibles.length} gemas
+                    </span>
                   </div>
                 </div>
               )}

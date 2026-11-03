@@ -1,26 +1,24 @@
 import React from 'react';
 import { User } from '../types';
 import { getSubLevelForPoints, OFFICIAL_SEMILLITO_IMAGE } from '../constants/steam';
-import { LogOut, User as UserIcon, Shield, Volume2, VolumeX, BookOpen, Award, Compass, Code2 } from 'lucide-react';
+import { LogOut, User as UserIcon, Shield, Volume2, VolumeX, BookOpen, Award, Compass, UserCheck } from 'lucide-react';
 import { sounds } from '../utils/sound';
+
+export type AppView = 'challenges' | 'student' | 'teacher' | 'badges' | 'guide';
 
 interface NavbarProps {
   user: User | null;
   onOpenStudentLogin: () => void;
   onOpenTeacherLogin: () => void;
-  onOpenHowToPlay: () => void;
-  onOpenBadges: () => void;
   onLogout: () => void;
-  activeView: 'challenges' | 'teacher';
-  setActiveView: (view: 'challenges' | 'teacher') => void;
+  activeView: AppView;
+  setActiveView: (view: AppView) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   user,
   onOpenStudentLogin,
   onOpenTeacherLogin,
-  onOpenHowToPlay,
-  onOpenBadges,
   onLogout,
   activeView,
   setActiveView,
@@ -38,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-8 h-16">
-          {/* Zone 1: Single text wordmark with official Semillito character */}
+          {/* Zone 1: Wordmark with official Semillito character */}
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setActiveView('challenges')}
@@ -68,22 +66,40 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={() => setActiveView('challenges')}
               className={`hover:text-emerald-700 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                activeView === 'challenges' ? 'text-emerald-600 font-semibold' : ''
+                activeView === 'challenges' ? 'text-emerald-600 font-bold' : ''
               }`}
             >
               <Compass className="w-4 h-4" />
               Retos Educativos
             </button>
+
+            {user?.role === 'student' && (
+              <button
+                onClick={() => setActiveView('student')}
+                className={`hover:text-emerald-700 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                  activeView === 'student' ? 'text-emerald-600 font-bold' : ''
+                }`}
+              >
+                <UserCheck className="w-4 h-4" />
+                Mi Progreso STEAM
+              </button>
+            )}
+
             <button
-              onClick={onOpenHowToPlay}
-              className="hover:text-emerald-700 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
+              onClick={() => setActiveView('guide')}
+              className={`hover:text-emerald-700 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                activeView === 'guide' ? 'text-emerald-600 font-bold' : ''
+              }`}
             >
               <BookOpen className="w-4 h-4" />
               Cómo Jugar
             </button>
+
             <button
-              onClick={onOpenBadges}
-              className="hover:text-emerald-700 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
+              onClick={() => setActiveView('badges')}
+              className={`hover:text-emerald-700 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                activeView === 'badges' ? 'text-emerald-600 font-bold' : ''
+              }`}
             >
               <Award className="w-4 h-4" />
               Subniveles e Insignias
@@ -92,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {user?.role === 'teacher' && (
               <button
                 onClick={() => setActiveView(activeView === 'teacher' ? 'challenges' : 'teacher')}
-                className={`hover:text-emerald-700 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 font-semibold cursor-pointer ${
+                className={`hover:text-indigo-700 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 font-bold cursor-pointer ${
                   activeView === 'teacher' ? 'text-indigo-600' : 'text-slate-700'
                 }`}
               >
@@ -116,25 +132,37 @@ export const Navbar: React.FC<NavbarProps> = ({
             {user ? (
               <div className="flex items-center gap-2.5">
                 {user.role === 'student' ? (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200/80 rounded-xl">
+                  <button
+                    onClick={() => setActiveView('student')}
+                    title="Ver mi perfil y expediente de alumno"
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                      activeView === 'student'
+                        ? 'bg-emerald-100/80 border-emerald-400 ring-2 ring-emerald-400/50'
+                        : 'bg-emerald-50 border-emerald-200/80 hover:bg-emerald-100/60'
+                    }`}
+                  >
                     <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
                       {user.alias.charAt(0).toUpperCase()}
                     </div>
                     <div className="text-left">
                       <div className="text-xs font-bold text-slate-800 leading-tight">
-                        {user.alias}
+                        {user.display_name || user.alias}
                       </div>
                       <div className="text-[10px] text-emerald-700 font-semibold tabular-nums leading-none">
                         {user.total_points} pts · {subLevelInfo ? `${subLevelInfo.tierName} Nivel ${subLevelInfo.subLevel}` : `Nivel ${user.current_level}`}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ) : (
                   <button
                     onClick={() => setActiveView('teacher')}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer"
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                      activeView === 'teacher'
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+                    }`}
                   >
-                    <Shield className="w-4 h-4 text-indigo-600" />
+                    <Shield className="w-4 h-4" />
                     <span>Profesor ({user.alias})</span>
                   </button>
                 )}
@@ -170,31 +198,45 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Mobile secondary navigation strip */}
-        <div className="md:hidden flex items-center justify-between py-2 border-t border-slate-100 text-xs overflow-x-auto gap-3">
+        <div className="md:hidden flex items-center justify-between py-2 border-t border-slate-100 text-xs overflow-x-auto gap-2">
           <button
             onClick={() => setActiveView('challenges')}
-            className={`whitespace-nowrap px-2 py-1 rounded ${
+            className={`whitespace-nowrap px-2.5 py-1 rounded-lg ${
               activeView === 'challenges' ? 'text-emerald-700 font-bold bg-emerald-50' : 'text-slate-600'
             }`}
           >
             Retos
           </button>
+          {user?.role === 'student' && (
+            <button
+              onClick={() => setActiveView('student')}
+              className={`whitespace-nowrap px-2.5 py-1 rounded-lg ${
+                activeView === 'student' ? 'text-emerald-700 font-bold bg-emerald-50' : 'text-slate-600'
+              }`}
+            >
+              Mi Progreso
+            </button>
+          )}
           <button
-            onClick={onOpenHowToPlay}
-            className="whitespace-nowrap px-2 py-1 rounded text-slate-600 hover:text-slate-900"
+            onClick={() => setActiveView('guide')}
+            className={`whitespace-nowrap px-2.5 py-1 rounded-lg ${
+              activeView === 'guide' ? 'text-emerald-700 font-bold bg-emerald-50' : 'text-slate-600'
+            }`}
           >
             Cómo Jugar
           </button>
           <button
-            onClick={onOpenBadges}
-            className="whitespace-nowrap px-2 py-1 rounded text-slate-600 hover:text-slate-900"
+            onClick={() => setActiveView('badges')}
+            className={`whitespace-nowrap px-2.5 py-1 rounded-lg ${
+              activeView === 'badges' ? 'text-emerald-700 font-bold bg-emerald-50' : 'text-slate-600'
+            }`}
           >
             Subniveles
           </button>
           {user?.role === 'teacher' && (
             <button
               onClick={() => setActiveView(activeView === 'teacher' ? 'challenges' : 'teacher')}
-              className="whitespace-nowrap px-2 py-1 rounded text-indigo-700 font-bold bg-indigo-50"
+              className="whitespace-nowrap px-2.5 py-1 rounded-lg text-indigo-700 font-bold bg-indigo-50"
             >
               {activeView === 'teacher' ? 'Vista Alumno' : 'Panel Profesor'}
             </button>

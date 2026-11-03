@@ -461,7 +461,7 @@ app.get('/api/student/profile', requireAuth, (req: AuthRequest, res: Response) =
   `).all(user.id);
 
   const completions = db.prepare(`
-    SELECT c.id, c.challenge_id, ch.title, ch.category, ch.difficulty, c.points_awarded, c.completed_at
+    SELECT c.id, c.challenge_id, ch.title, ch.category, ch.difficulty, ch.type, ch.estimated_time_min, c.points_awarded, c.completed_at
     FROM completions c
     JOIN challenges ch ON ch.id = c.challenge_id
     WHERE c.user_id = ?
@@ -631,6 +631,7 @@ app.post('/api/teacher/challenges', requireTeacher, (req: Request, res: Response
     clues_grid,
     solution_grid,
     config,
+    block_config,
   } = req.body;
 
   if (!title || !description) {
@@ -640,6 +641,7 @@ app.post('/api/teacher/challenges', requireTeacher, (req: Request, res: Response
   const id = `c_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const challengeType = type || 'semidoku';
   const size = Number(grid_size) || 5;
+  const challengeConfig = config || block_config;
 
   db.prepare(`
     INSERT INTO challenges (
@@ -651,17 +653,17 @@ app.post('/api/teacher/challenges', requireTeacher, (req: Request, res: Response
     String(title).trim(),
     String(description).trim(),
     challengeType,
-    subtype || 'latin_square',
-    category || 'lógica',
+    subtype || (challengeType === 'blockly_code' ? 'maze_blocks' : 'latin_square'),
+    category || (challengeType === 'blockly_code' ? 'programación' : 'lógica'),
     difficulty || 'Fácil',
     Number(points) || 50,
     Number(estimated_time_min) || 10,
     is_published ? 1 : 0,
     size,
-    symbols_theme || 'robotics',
+    symbols_theme || (challengeType === 'blockly_code' ? 'robotics' : 'nature_steam'),
     clues_grid ? JSON.stringify(clues_grid) : '[]',
     solution_grid ? JSON.stringify(solution_grid) : '[]',
-    config ? JSON.stringify(config) : null
+    challengeConfig ? JSON.stringify(challengeConfig) : null
   );
 
   return res.json({ id, success: true, message: 'Reto creado con éxito.' });

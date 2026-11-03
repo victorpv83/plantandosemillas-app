@@ -79,7 +79,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             </h1>
 
             <p className="text-sm sm:text-base text-emerald-100/90 max-w-2xl leading-relaxed mb-6">
-              Resuelve retos de robótica, programación por bloques y desafíos lógicos como el nuevo <strong className="text-amber-300">Semidoku Minecraft de Semillito</strong>. Gana puntos, sube del subnivel 3 al subnivel 1 y desbloquea insignias.
+              Resuelve retos de robótica, programación por bloques y desafíos lógicos como el <strong className="text-amber-300">Semidoku del Jardín Secreto</strong> o el <strong className="text-amber-300">Castillo Encantado de Semillito</strong>. Gana puntos, sube del subnivel 3 al subnivel 1 y desbloquea insignias.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">

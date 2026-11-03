@@ -73,6 +73,15 @@ export const StudentLoginModal: React.FC<StudentLoginModalProps> = ({
           </p>
         </div>
 
+        {/* Notice about teacher-managed registration */}
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xl flex items-start gap-2.5">
+          <span className="text-base shrink-0">🛡️</span>
+          <div>
+            <span className="font-extrabold text-amber-950">Registro gestionado por el profesor:</span>{' '}
+            Los alumnos no pueden autorregistrarse por sí mismos. Si aún no tienes tu alias o código personal, solicítalo a tu profesor de la academia.
+          </div>
+        </div>
+
         {error && (
           <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />

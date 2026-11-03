@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { User, Challenge, SubmissionResponse } from './types';
 import { api } from './services/api';
-import { Navbar } from './components/Navbar';
+import { Navbar, AppView } from './components/Navbar';
 import { StudentDashboard } from './components/StudentDashboard';
+import { StudentProfile } from './components/StudentProfile';
+import { BadgesView } from './components/BadgesView';
+import { HowToPlayView } from './components/HowToPlayView';
 import { SemidokuGame } from './components/SemidokuGame';
 import { BlocklyGame } from './components/BlocklyGame';
 import { TeacherPanel } from './components/TeacherPanel';
 import { StudentLoginModal } from './components/StudentLoginModal';
 import { TeacherLoginModal } from './components/TeacherLoginModal';
-import { HowToPlayModal } from './components/HowToPlayModal';
-import { BadgesModal } from './components/BadgesModal';
 import { OFFICIAL_SEMILLITO_IMAGE } from './constants/steam';
-import { Shield, Sparkles, Trophy, Award, X } from 'lucide-react';
+import { Sparkles, Trophy, Award, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from './utils/sound';
 
@@ -19,14 +20,12 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [activeChallenge, setActiveChallenge] = useState<Challenge | null>(null);
-  const [activeView, setActiveView] = useState<'challenges' | 'teacher'>('challenges');
+  const [activeView, setActiveView] = useState<AppView>('challenges');
   const [loading, setLoading] = useState<boolean>(true);
 
   // Modals state
   const [showStudentLogin, setShowStudentLogin] = useState<boolean>(false);
   const [showTeacherLogin, setShowTeacherLogin] = useState<boolean>(false);
-  const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
-  const [showBadges, setShowBadges] = useState<boolean>(false);
 
   // Celebration destello & gamified reward state
   const [celebrationResult, setCelebrationResult] = useState<SubmissionResponse | null>(null);
@@ -54,6 +53,7 @@ export default function App() {
 
   const handleStudentLoginSuccess = (loggedInUser: User) => {
     setUser(loggedInUser);
+    setActiveView('student');
     refreshData();
   };
 
@@ -158,8 +158,6 @@ export default function App() {
         user={user}
         onOpenStudentLogin={() => setShowStudentLogin(true)}
         onOpenTeacherLogin={() => setShowTeacherLogin(true)}
-        onOpenHowToPlay={() => setShowHowToPlay(true)}
-        onOpenBadges={() => setShowBadges(true)}
         onLogout={handleLogout}
         activeView={activeView}
         setActiveView={(v) => {
@@ -194,6 +192,31 @@ export default function App() {
               onOpenLogin={() => setShowStudentLogin(true)}
             />
           )
+        ) : activeView === 'student' && user ? (
+          <StudentProfile
+            user={user}
+            onLogout={handleLogout}
+            onNavigateToChallenges={() => {
+              setActiveChallenge(null);
+              setActiveView('challenges');
+            }}
+            onNavigateToBadges={() => {
+              setActiveChallenge(null);
+              setActiveView('badges');
+            }}
+          />
+        ) : activeView === 'badges' ? (
+          <BadgesView
+            userPoints={user?.total_points || 0}
+            userBadges={(user as any)?.badges || []}
+            isLoggedIn={Boolean(user && user.role === 'student')}
+            onBack={() => setActiveView('challenges')}
+          />
+        ) : activeView === 'guide' ? (
+          <HowToPlayView
+            onBack={() => setActiveView('challenges')}
+            onNavigateToChallenges={() => setActiveView('challenges')}
+          />
         ) : activeView === 'teacher' && user?.role === 'teacher' ? (
           <TeacherPanel />
         ) : (
@@ -201,14 +224,14 @@ export default function App() {
             user={user}
             challenges={challenges}
             onPlayChallenge={(ch) => setActiveChallenge(ch)}
-            onOpenBadges={() => setShowBadges(true)}
-            onOpenHowToPlay={() => setShowHowToPlay(true)}
+            onOpenBadges={() => setActiveView('badges')}
+            onOpenHowToPlay={() => setActiveView('guide')}
             onOpenLogin={() => setShowStudentLogin(true)}
           />
         )}
       </main>
 
-      {/* Modals */}
+      {/* Auth Modals */}
       <StudentLoginModal
         isOpen={showStudentLogin}
         onClose={() => setShowStudentLogin(false)}
@@ -221,18 +244,6 @@ export default function App() {
         onLoginSuccess={handleTeacherLoginSuccess}
       />
 
-      <HowToPlayModal
-        isOpen={showHowToPlay}
-        onClose={() => setShowHowToPlay(false)}
-      />
-
-      <BadgesModal
-        isOpen={showBadges}
-        onClose={() => setShowBadges(false)}
-        userPoints={user?.total_points || 0}
-        userBadges={(user as any)?.badges || []}
-      />
-
       {/* Gamified Celebration & Destello Screen Flash Overlay */}
       {showCelebrationFlash && celebrationResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -242,7 +253,7 @@ export default function App() {
             aria-hidden="true"
           />
 
-          {/* Concentric luminous glowing rings */}
+          {/* Luminous glowing rings */}
           <div className="absolute w-[520px] h-[520px] sm:w-[720px] sm:h-[720px] rounded-full border-4 border-amber-300/40 animate-glow-ring pointer-events-none" />
           <div className="absolute w-[320px] h-[320px] sm:w-[460px] sm:h-[460px] rounded-full bg-radial from-amber-200/50 via-emerald-300/20 to-transparent blur-2xl animate-pulse pointer-events-none" />
 
@@ -320,10 +331,11 @@ export default function App() {
                 <div className="flex flex-wrap gap-1.5">
                   {celebrationResult.new_badges.map((b) => (
                     <span
-                      key={b.id}
-                      className="inline-flex items-center gap-1 text-xs font-bold bg-amber-100 text-amber-900 px-2.5 py-1 rounded-xl border border-amber-300"
+                      key={b.id || b.code}
+                      className="px-2.5 py-1 bg-amber-100 text-amber-900 rounded-lg text-xs font-extrabold flex items-center gap-1 border border-amber-300 shadow-2xs"
                     >
-                      🏅 {b.name}
+                      <span>{b.icon || '🏅'}</span>
+                      <span>{b.name}</span>
                     </span>
                   ))}
                 </div>
@@ -332,48 +344,13 @@ export default function App() {
 
             <button
               onClick={() => setShowCelebrationFlash(false)}
-              className="w-full py-3 px-4 rounded-xl font-black text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-md hover:shadow-lg transition-all text-sm cursor-pointer"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-colors shadow-xs cursor-pointer"
             >
-              ¡Continuar explorando retos!
+              ¡Continuar Explorando Retos!
             </button>
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md overflow-hidden shrink-0">
-              <img
-                src={OFFICIAL_SEMILLITO_IMAGE}
-                alt="Semillito"
-                className="w-full h-full object-contain"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <span className="font-bold text-slate-800">Plantando Semillas STEAM</span>
-            <span>—</span>
-            <span className="italic">«Despierta su curiosidad. Impulsa su futuro»</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-[11px] text-slate-400">
-              Privacidad infantil garantizada (sin recopilación de datos personales)
-            </span>
-
-            {user?.role !== 'teacher' && (
-              <button
-                onClick={() => setShowTeacherLogin(true)}
-                className="hover:text-slate-800 flex items-center gap-1 font-semibold cursor-pointer"
-              >
-                <Shield className="w-3.5 h-3.5 text-indigo-500" />
-                Acceso Profesor
-              </button>
-            )}
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
