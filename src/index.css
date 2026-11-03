@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-heading: 'Outfit', sans-serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* Custom smooth transitions & animations */
+@keyframes popIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+
+.animate-pop-in {
+  animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.glow-active {
+  animation: pulseGlow 2s infinite;
+}
+
+/* Celebratory flash / destello animations */
+@keyframes celebrationFlash {
+  0% { opacity: 0; transform: scale(0.96); filter: brightness(1.6); }
+  20% { opacity: 0.95; transform: scale(1); filter: brightness(1.2); }
+  75% { opacity: 0.9; transform: scale(1.01); filter: brightness(1); }
+  100% { opacity: 0; transform: scale(1.03); filter: brightness(1); }
+}
+
+@keyframes celebrationGlowRing {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  50% { opacity: 0.6; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.animate-celebration-flash {
+  animation: celebrationFlash 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-glow-ring {
+  animation: celebrationGlowRing 2.2s cubic-bezier(0.1, 0.8, 0.2, 1) infinite;
+}
+

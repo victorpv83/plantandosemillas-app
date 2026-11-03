@@ -1,0 +1,6 @@
+{
+  "name": "Plantando Semillas STEAM – Retos",
+  "description": "Plataforma educativa gamificada de retos de programación, robótica y lógica (Semidoku) para alumnos de Plantando Semillas STEAM.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
