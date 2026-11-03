@@ -602,97 +602,7 @@ export const BlocklyGame: React.FC<BlocklyGameProps> = ({
           </div>
         </div>
 
-        {/* Col 2: Grid Stage with Semillito */}
-        <div className="lg:col-span-5 flex flex-col items-center bg-slate-900 rounded-3xl p-5 border-4 border-slate-800 shadow-lg">
-          <div className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">
-            Escenario de Navegación
-          </div>
-
-          <div
-            className="grid gap-2 select-none"
-            style={{
-              gridTemplateColumns: `repeat(${config.gridCols}, minmax(0, 1fr))`,
-            }}
-          >
-            {Array.from({ length: config.gridRows }).map((_, r) =>
-              Array.from({ length: config.gridCols }).map((__, c) => {
-                const isAgent = agentPos.r === r && agentPos.c === c;
-                const isGoal = config.goalPos.r === r && config.goalPos.c === c;
-                const isObstacle = config.obstacles.some((o) => o.r === r && o.c === c);
-                const hasCollectible =
-                  config.collectibles.some((co) => co.r === r && co.c === c) &&
-                  !collectedItems.includes(`${r},${c}`);
-
-                const dirAngle = {
-                  right: 'rotate-0',
-                  down: 'rotate-90',
-                  left: 'rotate-180',
-                  up: '-rotate-90',
-                }[agentPos.dir];
-
-                return (
-                  <div
-                    key={`${r}-${c}`}
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center relative font-bold text-lg border transition-all ${
-                      isObstacle
-                        ? 'bg-slate-800 border-slate-700 text-slate-500'
-                        : isGoal
-                        ? 'bg-amber-950/40 border-amber-500 text-amber-400 shadow-sm'
-                        : 'bg-slate-800/80 border-slate-700/60'
-                    }`}
-                  >
-                    {isObstacle && <span className="text-2xl select-none">🪨</span>}
-
-                    {isGoal && !isAgent && (
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl animate-pulse">🏁</span>
-                        <span className="text-[9px] text-amber-300 font-bold">META</span>
-                      </div>
-                    )}
-
-                    {hasCollectible && !isAgent && (
-                      <span className="text-2xl animate-bounce select-none">💎</span>
-                    )}
-
-                    {isAgent && (
-                      <div className="relative w-11 h-11 rounded-xl bg-emerald-500/30 border border-emerald-400 p-1 flex items-center justify-center">
-                        <img
-                          src={OFFICIAL_SEMILLITO_IMAGE}
-                          alt="Semillito"
-                          className="w-full h-full object-contain"
-                          referrerPolicy="no-referrer"
-                        />
-                        <div
-                          className={`absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-amber-950 text-[10px] rounded-full flex items-center justify-center font-black transition-transform ${dirAngle}`}
-                          title={`Mirando hacia ${agentPos.dir}`}
-                        >
-                          ➤
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          <div className="mt-4 flex items-center gap-3 text-xs text-slate-400">
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> Semillito
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="text-sm">🪨</span> Roca
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="text-sm">💎</span> Gema ({collectedItems.length}/{config.collectibles.length})
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="text-sm">🏁</span> Meta
-            </span>
-          </div>
-        </div>
-
-        {/* Col 3: Program Sequence Workspace (Scratch Style) */}
+        {/* Col 2: Program Sequence Workspace (Tu Algoritmo - Scratch Style) */}
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -1002,7 +912,8 @@ export const BlocklyGame: React.FC<BlocklyGameProps> = ({
               <span>{isRunning ? 'Ejecutando...' : '▶️ Probar Algoritmo'}</span>
             </button>
 
-            {isStudentLoggedIn ? (
+            {/* Botón para comprobar si la solución es correcta - Visible solo si el alumno está registrado */}
+            {isStudentLoggedIn && (
               <button
                 type="button"
                 onClick={handleSubmitSolution}
@@ -1014,17 +925,109 @@ export const BlocklyGame: React.FC<BlocklyGameProps> = ({
                 ) : (
                   <CheckCircle2 className="w-3.5 h-3.5" />
                 )}
-                <span>Comprobar y Enviar Reto</span>
+                <span>Comprobar si la solución es correcta</span>
               </button>
-            ) : (
+            )}
+
+            {!isStudentLoggedIn && (
               <button
                 type="button"
                 onClick={onOpenLogin}
-                className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+                className="w-full py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold text-xs rounded-xl shadow-2xs transition-colors cursor-pointer text-center"
               >
-                Inicia sesión para guardar puntos
+                Inicia sesión para comprobar y guardar puntos
               </button>
             )}
+          </div>
+        </div>
+
+        {/* Col 3: Escenario de Navegación (Interactive Grid Map with Semillito - Totalmente a la derecha) */}
+        <div className="lg:col-span-5 flex flex-col items-center bg-slate-900 rounded-3xl p-5 border-4 border-slate-800 shadow-lg">
+          <div className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">
+            Escenario de Navegación
+          </div>
+
+          <div
+            className="grid gap-2 select-none"
+            style={{
+              gridTemplateColumns: `repeat(${config.gridCols}, minmax(0, 1fr))`,
+            }}
+          >
+            {Array.from({ length: config.gridRows }).map((_, r) =>
+              Array.from({ length: config.gridCols }).map((__, c) => {
+                const isAgent = agentPos.r === r && agentPos.c === c;
+                const isGoal = config.goalPos.r === r && config.goalPos.c === c;
+                const isObstacle = config.obstacles.some((o) => o.r === r && o.c === c);
+                const hasCollectible =
+                  config.collectibles.some((co) => co.r === r && co.c === c) &&
+                  !collectedItems.includes(`${r},${c}`);
+
+                const dirAngle = {
+                  right: 'rotate-0',
+                  down: 'rotate-90',
+                  left: 'rotate-180',
+                  up: '-rotate-90',
+                }[agentPos.dir];
+
+                return (
+                  <div
+                    key={`${r}-${c}`}
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center relative font-bold text-lg border transition-all ${
+                      isObstacle
+                        ? 'bg-slate-800 border-slate-700 text-slate-500'
+                        : isGoal
+                        ? 'bg-amber-950/40 border-amber-500 text-amber-400 shadow-sm'
+                        : 'bg-slate-800/80 border-slate-700/60'
+                    }`}
+                  >
+                    {isObstacle && <span className="text-2xl select-none">🪨</span>}
+
+                    {isGoal && !isAgent && (
+                      <div className="flex flex-col items-center">
+                        <span className="text-2xl animate-pulse">🏁</span>
+                        <span className="text-[9px] text-amber-300 font-bold">META</span>
+                      </div>
+                    )}
+
+                    {hasCollectible && !isAgent && (
+                      <span className="text-2xl animate-bounce select-none">💎</span>
+                    )}
+
+                    {isAgent && (
+                      <div className="relative w-11 h-11 rounded-xl bg-emerald-500/30 border border-emerald-400 p-1 flex items-center justify-center">
+                        <img
+                          src={OFFICIAL_SEMILLITO_IMAGE}
+                          alt="Semillito"
+                          className="w-full h-full object-contain"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div
+                          className={`absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-amber-950 text-[10px] rounded-full flex items-center justify-center font-black transition-transform ${dirAngle}`}
+                          title={`Mirando hacia ${agentPos.dir}`}
+                        >
+                          ➤
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="mt-4 flex items-center gap-3 text-xs text-slate-400">
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> Semillito
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="text-sm">🪨</span> Roca
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="text-sm">💎</span> Gema ({collectedItems.length}/{config.collectibles.length})
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="text-sm">🏁</span> Meta
+            </span>
           </div>
         </div>
       </div>

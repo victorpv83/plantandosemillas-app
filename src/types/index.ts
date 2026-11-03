@@ -23,7 +23,15 @@ export type ChallengeCategory = 'robótica' | 'programación' | 'lógica' | 'ele
 export type ChallengeDifficulty = 'Fácil' | 'Medio' | 'Avanzado';
 export type ChallengeType = 'semidoku' | 'blockly_code';
 export type ChallengeSubtype = 'latin_square' | 'character_placement' | 'maze_blocks';
-export type SymbolsTheme = 'robotics' | 'circuits' | 'nature_steam' | 'planets' | 'minecraft';
+export type SymbolsTheme =
+  | 'robotics'
+  | 'circuits'
+  | 'nature_steam'
+  | 'planets'
+  | 'minecraft'
+  | 'secret_garden'
+  | 'haunted_castle'
+  | 'halloween_lab';
 
 export interface SymbolItem {
   id: string;
@@ -34,6 +42,7 @@ export interface SymbolItem {
   textClass: string;
   borderClass: string;
   avatarUrl?: string;
+  isFixed?: boolean;
 }
 
 export type GridCell = string | null;

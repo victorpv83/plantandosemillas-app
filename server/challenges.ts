@@ -19,9 +19,35 @@ export function validateSemidokuSolution(
     return { isValid: false, message: 'La cuadrícula enviada no tiene las dimensiones correctas.' };
   }
 
-  // --- SUBTYPE: CHARACTER DEDUCTIVE PLACEMENT (e.g. Minecraft 5x5: 5 characters placed, 1 per row & col) ---
+  // --- SUBTYPE: CHARACTER DEDUCTIVE PLACEMENT (e.g. Minecraft 5x5, Jardín Secreto 4x4, Castillo 6x6) ---
   if (subtype === 'character_placement') {
-    // Collect all placed characters
+    // Identify fixed clues that do not count for character row/column rules
+    const fixedCluePositions = new Set<string>();
+    const fixedClueIds = new Set<string>();
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        const clue = cluesGrid[r]?.[c];
+        if (clue && clue.trim() !== '') {
+          fixedCluePositions.add(`${r},${c}`);
+          fixedClueIds.add(clue);
+        }
+      }
+    }
+
+    // Verify fixed elements were not modified or overwritten
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        const clue = cluesGrid[r]?.[c];
+        if (clue && userGrid[r]?.[c] !== clue) {
+          return {
+            isValid: false,
+            message: `El elemento fijo en la casilla Fila ${r + 1}, Columna ${c + 1} debe mantenerse en su sitio.`,
+          };
+        }
+      }
+    }
+
+    // Collect all placed movable characters
     const placedPositions = new Map<string, { r: number; c: number }>();
     const rowCounts = new Array(gridSize).fill(0);
     const colCounts = new Array(gridSize).fill(0);
@@ -30,6 +56,11 @@ export function validateSemidokuSolution(
       for (let c = 0; c < gridSize; c++) {
         const char = userGrid[r]?.[c];
         if (char && char.trim() !== '') {
+          // If this is a fixed clue item (like gato negro or murciélago), skip row/col character counting
+          if (fixedCluePositions.has(`${r},${c}`) || fixedClueIds.has(char)) {
+            continue;
+          }
+
           if (placedPositions.has(char)) {
             return {
               isValid: false,
@@ -63,12 +94,12 @@ export function validateSemidokuSolution(
       }
     }
 
-    // Check that all 5 target characters are placed
+    // Check that all required movable characters are placed
     const requiredCharacters = new Set<string>();
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {
         const solVal = solutionGrid[r]?.[c];
-        if (solVal && solVal.trim() !== '') {
+        if (solVal && solVal.trim() !== '' && !fixedClueIds.has(solVal)) {
           requiredCharacters.add(solVal);
         }
       }
@@ -78,7 +109,7 @@ export function validateSemidokuSolution(
       if (!placedPositions.has(req)) {
         return {
           isValid: false,
-          message: `Aún no has colocado a «${req}» en el tablero. Debes ubicar a todos los aventureros.`,
+          message: `Aún no has colocado a «${req}» en el tablero. Debes ubicar a todos los personajes requeridos.`,
         };
       }
     }
@@ -94,7 +125,7 @@ export function validateSemidokuSolution(
       }
     }
 
-    return { isValid: true, message: '¡Fantástico! Has resuelto la aventura deductiva a la perfección.' };
+    return { isValid: true, message: '¡Fantástico! Has resuelto el reto deductivo a la perfección.' };
   }
 
   // --- SUBTYPE: STANDARD LATIN SQUARE SEMIDOKU ---

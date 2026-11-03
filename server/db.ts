@@ -42,6 +42,9 @@ export function initDatabase() {
 
   const badges = [
     ['b_mine', 'minecraft_adventurer', 'Aventurero Minecraft', 'Resolviste el enigma de Semillito y sus compañeros en Minecraft.', '⛏️', 'aventura'],
+    ['b_jardin', 'secret_garden_master', 'El Jardín Secreto', 'Resolviste el enigma de los cuatro amigos en el Jardín Secreto.', '🌸', 'lógica'],
+    ['b_castillo', 'haunted_castle_junior', 'Castillo Encantado', 'Descifraste el misterio de los personajes de Halloween en el castillo.', '🎃', 'lógica'],
+    ['b_lab_halloween', 'halloween_alchemist', 'Laboratorio Secreto', 'Resolviste las operaciones matemáticas y enigmas del laboratorio.', '🧙', 'lógica'],
     ['b_deduct', 'deductive_detective', 'Detective Lógico', 'Superaste un reto deduciendo pistas paso a paso sin fallar.', '🔎', 'lógica'],
     ['b_blk1', 'first_code_blocks', 'Primer Algoritmo', 'Programaste con bloques tu primera secuencia de instrucciones.', '🧩', 'programación'],
     ['b_loop', 'loop_master', 'Bucle Perfecto', 'Utilizaste bloques de repetición para optimizar tu código.', '🔁', 'programación'],
@@ -250,6 +253,259 @@ export function initDatabase() {
       '⚡ Bloques 02: Giros en Circuito y Bucles',
       'Combina instrucciones de avance con giros a la derecha y a la izquierda. Utiliza bloques de repetición (x2 o x3) para que tu código sea más elegante y eficiente.',
       JSON.stringify(blockMazeConfig2)
+    );
+  }
+
+  // Clean up deprecated challenges requested by user
+  db.exec(`
+    DELETE FROM challenges 
+    WHERE title LIKE '%Primeros Pasos%' 
+       OR title LIKE '%Laboratorio de Circuitos%' 
+       OR title LIKE '%Huerto Tecnológico%' 
+       OR title LIKE '%Constelaciones STEAM%'
+       OR title LIKE '%Misión Constelaciones%';
+  `);
+
+  // Seed SEMIDOKU 02 – EL JARDÍN SECRETO (4x4)
+  const jardinChallenge = db.prepare('SELECT id FROM challenges WHERE id = ?').get('c_jardin_02');
+  if (!jardinChallenge) {
+    const jardinClues = [
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+    ];
+
+    // Fila 1 (idx 0), Col 3 (idx 2): Exploradora
+    // Fila 2 (idx 1), Col 2 (idx 1): Semillito
+    // Fila 3 (idx 2), Col 1 (idx 0): Ayudante (debajo, al sur de Semillito)
+    // Fila 4 (idx 3), Col 4 (idx 3): Robot (a la derecha de Semillito)
+    const jardinSolution = [
+      [null, null, 'exploradora', null],
+      [null, 'semillito', null, null],
+      ['ayudante', null, null, null],
+      [null, null, null, 'robot'],
+    ];
+
+    const jardinGuidedClues = [
+      {
+        step: 1,
+        title: 'Pista 1: La fila de Semillito',
+        text: 'Semillito está en la fila 2.',
+        question: '¿Qué fila debe ocupar Semillito? (Fila 2)',
+      },
+      {
+        step: 2,
+        title: 'Pista 2: La fila del Robot',
+        text: '🤖 El Robot está en la fila 4. (Semillito y Robot no pueden estar en la misma columna).',
+        question: '¿Qué fila queda reservada para el Robot? (Fila 4)',
+      },
+      {
+        step: 3,
+        title: 'Pista 3: La columna de la Exploradora',
+        text: '🧝 La Exploradora está en la columna 3 (C).',
+        question: 'Coloca mentalmente a la Exploradora en algún lugar de la Columna 3.',
+      },
+      {
+        step: 4,
+        title: 'Pista 4: El Robot a la derecha',
+        text: '🤖 El Robot está a la derecha de Semillito. Recuerda que no pueden compartir fila ni columna.',
+        question: 'El Robot debe estar más a la derecha que Semillito. ¿Qué columnas quedan a su derecha?',
+      },
+      {
+        step: 5,
+        title: 'Pista 5: Los bordes del jardín',
+        text: 'Semillito no está junto al borde izquierdo (Col 1) ni al borde derecho (Col 4).',
+        question: 'Como la Exploradora ya ocupa la Columna 3, ¡Semillito debe estar en la Columna 2 (B2)! Y el Robot, situado a su derecha sin compartir columna con la Exploradora, se coloca en la Columna 4 (D4).',
+      },
+      {
+        step: 6,
+        title: 'Pista 6: El vuelo del Ayudante',
+        text: '🐝 El Ayudante está debajo, al sur, ¡de Semillito!',
+        question: 'Si Semillito está en la Fila 2, el Ayudante está al sur (Fila 3) en la columna libre (Columna 1 / A3). La Exploradora se sitúa en Fila 1, Columna 3 (C1).',
+      },
+    ];
+
+    db.prepare(`
+      INSERT INTO challenges (
+        id, title, description, type, subtype, category, difficulty, points,
+        estimated_time_min, is_published, grid_size, symbols_theme, clues_json, solution_json, config_json, created_at, updated_at
+      ) VALUES (?, ?, ?, 'semidoku', 'character_placement', 'lógica', 'Fácil', 60, 10, 1, 4, 'secret_garden', ?, ?, ?, datetime('now'), datetime('now'))
+    `).run(
+      'c_jardin_02',
+      '🌸 Semidoku 02: El Jardín Secreto',
+      '¡Semillito ha encontrado un jardín secreto con 16 casillas! Entre los cuatro amigos se han enfadado y cada uno necesita encontrar su sitio sin compartir fila ni columna. Lee las 6 pistas en orden para descubrir dónde está cada personaje.',
+      JSON.stringify(jardinClues),
+      JSON.stringify(jardinSolution),
+      JSON.stringify({ guided_clues: jardinGuidedClues })
+    );
+  }
+
+  // Seed SEMIDOKU 04 (< 9 años) – El misterio del castillo encantado (6x6)
+  const castilloChallenge = db.prepare('SELECT id FROM challenges WHERE id = ?').get('c_castillo_04');
+  if (!castilloChallenge) {
+    const castilloClues = [
+      [null, null, null, null, null, null],
+      ['gato_negro', null, null, null, null, null],
+      [null, null, null, null, null, null],
+      [null, null, null, 'murcielago', null, null],
+      [null, null, null, null, null, null],
+      [null, null, null, null, null, null],
+    ];
+
+    // Fila 1: Semillito en Col 2
+    // Fila 2: Gato (fijo C1), Fantasma en Col 4 (misma fila gato F2, misma col murciélago C4)
+    // Fila 3: Bruja en Col 5 (dos filas arriba calabaza F5->F3, una col izq C6->C5)
+    // Fila 4: Murciélago (fijo C4)
+    // Fila 5: Calabaza en Col 6 (fila inferior murciélago F4->F5, última col C6)
+    // Fila 6: Zombi en Col 3 (última fila F6, a la derecha de Semillito C2->C3)
+    const castilloSolution = [
+      [null, 'semillito', null, null, null, null],
+      ['gato_negro', null, null, 'fantasma', null, null],
+      [null, null, null, null, 'bruja', null],
+      [null, null, null, 'murcielago', null, null],
+      [null, null, null, null, null, 'calabaza'],
+      [null, null, 'zombi', null, null, null],
+    ];
+
+    const castilloGuidedClues = [
+      {
+        step: 1,
+        title: 'Pista 1. La llegada de Semillito',
+        text: 'Semillito está en la primera fila.',
+        question: '¿Qué fila debe ocupar Semillito? (Fila 1)',
+      },
+      {
+        step: 2,
+        title: 'Pista 2. El camino de Semillito',
+        text: 'Semillito está en la segunda columna.',
+        question: '¿En qué casilla exacta se ubica Semillito? (Fila 1, Columna 2)',
+      },
+      {
+        step: 3,
+        title: 'Pista 3. El zombi aparece',
+        text: '🧟 El Zombi está en la última fila del tablero.',
+        question: '¿Cuál es la última fila de un tablero de 6 filas? (Fila 6)',
+      },
+      {
+        step: 4,
+        title: 'Pista 4. El zombi busca compañía',
+        text: '🧟 El Zombi está en la columna inmediatamente a la derecha de Semillito.',
+        question: 'Si Semillito está en la Columna 2, ¿en qué columna se sitúa el Zombi? (Columna 3 -> Fila 6, Columna 3)',
+      },
+      {
+        step: 5,
+        title: 'Pista 5. La calabaza se despierta',
+        text: '🎃 La Calabaza está en la fila inmediatamente inferior a la del murciélago.',
+        question: 'El murciélago está en la Fila 4. ¿En qué fila se despierta la Calabaza? (Fila 5)',
+      },
+      {
+        step: 6,
+        title: 'Pista 6. La calabaza busca su rincón',
+        text: '🎃 La Calabaza está en la última columna.',
+        question: '¿En qué casilla exacta se coloca la Calabaza? (Fila 5, Columna 6)',
+      },
+      {
+        step: 7,
+        title: 'Pista 7. La escoba de la bruja',
+        text: '🧙 La Bruja está dos filas por encima de la Calabaza y una columna a su izquierda.',
+        question: 'Si la Calabaza está en F5, C6, ¿dónde vuela la Bruja? (Fila 3, Columna 5)',
+      },
+      {
+        step: 8,
+        title: 'Pista 8. El fantasma del gato',
+        text: '👻 El Fantasma está en la misma fila que el gato negro y en la misma columna que el murciélago.',
+        question: 'El gato negro está en Fila 2 y el murciélago en Columna 4. ¿Dónde se encuentra el Fantasma? (Fila 2, Columna 4)',
+      },
+    ];
+
+    db.prepare(`
+      INSERT INTO challenges (
+        id, title, description, type, subtype, category, difficulty, points,
+        estimated_time_min, is_published, grid_size, symbols_theme, clues_json, solution_json, config_json, created_at, updated_at
+      ) VALUES (?, ?, ?, 'semidoku', 'character_placement', 'lógica', 'Medio', 90, 15, 1, 6, 'haunted_castle', ?, ?, ?, datetime('now'), datetime('now'))
+    `).run(
+      'c_castillo_04',
+      '🎃 Semidoku 04 (< 9 años): El misterio del castillo encantado',
+      '¡Semillito ha encontrado un castillo encantado! Dentro viven una bruja, un fantasma, una calabaza y un zombi. El gato negro (Fila 2, Columna 1) y el murciélago (Fila 4, Columna 4) ya están colocados como elementos fijos. Ningún personaje puede compartir fila ni columna con otro.',
+      JSON.stringify(castilloClues),
+      JSON.stringify(castilloSolution),
+      JSON.stringify({ guided_clues: castilloGuidedClues })
+    );
+  }
+
+  // Seed SEMIDOKU 04 (9+ años) – El laboratorio secreto de Halloween (6x6)
+  const labChallenge = db.prepare('SELECT id FROM challenges WHERE id = ?').get('c_laboratorio_04_plus');
+  if (!labChallenge) {
+    const labClues = [
+      [null, null, null, null, null, null],
+      ['gato_negro', null, null, null, null, null],
+      [null, null, null, null, null, null],
+      [null, null, null, 'murcielago', null, null],
+      [null, null, null, null, null, null],
+      [null, null, null, null, null, null],
+    ];
+
+    // Solution as specified by user:
+    // Semillito: Fila 1, Columna 2
+    // Bruja: Fila 3, Columna 5
+    // Fantasma: Fila 2, Columna 6
+    // Calabaza: Fila 5, Columna 3
+    // Zombi: Fila 6, Columna 4
+    const labSolution = [
+      [null, 'semillito', null, null, null, null],
+      ['gato_negro', null, null, null, null, 'fantasma'],
+      [null, null, null, null, 'bruja', null],
+      [null, null, null, 'murcielago', null, null],
+      [null, null, 'calabaza', null, null, null],
+      [null, null, null, 'zombi', null, null],
+    ];
+
+    const labGuidedClues = [
+      {
+        step: 1,
+        title: 'Pista 1. La semilla mágica',
+        text: 'Semillito ha encontrado una poción con dos operaciones:\n• Su fila es el resultado de 9 − 8.\n• Su columna es el resultado de 10 ÷ 5.',
+        question: 'Calcula 9 − 8 = 1 y 10 ÷ 5 = 2. ¿En qué casilla está Semillito? (Fila 1, Columna 2)',
+      },
+      {
+        step: 2,
+        title: 'Pista 2. La escoba de la bruja',
+        text: '🧙 La Bruja ha dejado escrito en su libro de hechizos:\n• Su fila es la mitad del número total de filas del tablero (6 ÷ 2).\n• Su columna está dos posiciones a la derecha de su fila.',
+        question: 'Fila = 6 ÷ 2 = 3. Columna = 3 + 2 = 5. ¿Dónde se encuentra la Bruja? (Fila 3, Columna 5)',
+      },
+      {
+        step: 3,
+        title: 'Pista 3. El fantasma del gato',
+        text: '👻 El Fantasma se encuentra en la misma fila que el gato negro (Fila 2).\nAdemás, su columna está inmediatamente a la derecha de la columna de la Bruja.',
+        question: 'La Bruja está en Columna 5. ¿Cuál es la columna del Fantasma? (Columna 5 + 1 = 6 -> Fila 2, Columna 6)',
+      },
+      {
+        step: 4,
+        title: 'Pista 4. La calabaza del murciélago',
+        text: '🎃 La Calabaza aparece en la fila inmediatamente inferior a la del murciélago (Fila 4 + 1 = 5).\nPara descubrir su columna, se ubica en la Columna 3.',
+        question: '¿En qué casilla debe colocarse la Calabaza? (Fila 5, Columna 3)',
+      },
+      {
+        step: 5,
+        title: 'Pista 5. El último hechizo',
+        text: '🧟 El Zombi ha dejado dos mensajes:\n• Su fila es el resultado de multiplicar 2 × 3.\n• Su columna es el doble de la columna de Semillito.',
+        question: 'Fila = 2 × 3 = 6. Semillito está en Columna 2, luego 2 × 2 = 4. ¿Dónde se ubica el Zombi? (Fila 6, Columna 4)',
+      },
+    ];
+
+    db.prepare(`
+      INSERT INTO challenges (
+        id, title, description, type, subtype, category, difficulty, points,
+        estimated_time_min, is_published, grid_size, symbols_theme, clues_json, solution_json, config_json, created_at, updated_at
+      ) VALUES (?, ?, ?, 'semidoku', 'character_placement', 'lógica', 'Avanzado', 110, 20, 1, 6, 'halloween_lab', ?, ?, ?, datetime('now'), datetime('now'))
+    `).run(
+      'c_laboratorio_04_plus',
+      '🎃 Semidoku 04 (9+ años): El laboratorio secreto de Halloween',
+      '¡Algo extraño sucede en el laboratorio secreto de Halloween! Semillito, una bruja, un fantasma, una calabaza y un zombi intentan encontrar sus lugares en un tablero de 6×6 sin compartir fila ni columna. Resuelve las operaciones matemáticas para hallar las posiciones.',
+      JSON.stringify(labClues),
+      JSON.stringify(labSolution),
+      JSON.stringify({ guided_clues: labGuidedClues })
     );
   }
 }

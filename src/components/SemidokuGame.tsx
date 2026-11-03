@@ -38,7 +38,8 @@ export const SemidokuGame: React.FC<SemidokuGameProps> = ({
 }) => {
   const size = challenge.grid_size;
   const isCharacterPlacement = challenge.subtype === 'character_placement';
-  const symbols: SymbolItem[] = (THEME_SYMBOLS[challenge.symbols_theme] || THEME_SYMBOLS.robotics).slice(0, size);
+  const allThemeSymbols: SymbolItem[] = THEME_SYMBOLS[challenge.symbols_theme] || THEME_SYMBOLS.robotics;
+  const symbols: SymbolItem[] = allThemeSymbols.filter((s) => !s.isFixed).slice(0, size);
 
   // Initialize board with challenge clues
   const [grid, setGrid] = useState<SemidokuGrid>(() => {
@@ -403,13 +404,17 @@ export const SemidokuGame: React.FC<SemidokuGameProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left: Interactive Board */}
         <div className="lg:col-span-7 flex flex-col items-center">
-          {/* Header row labels (C1, C2, C3, C4, C5) */}
+          {/* Header row labels (C1, C2, C3, C4, C5 / A, B, C, D) */}
           <div className="flex items-center mb-1 text-slate-400 text-xs font-mono font-bold pl-8">
-            {Array.from({ length: size }).map((_, colIdx) => (
-              <div key={colIdx} className="w-14 sm:w-16 md:w-18 text-center">
-                C{colIdx + 1}
-              </div>
-            ))}
+            {Array.from({ length: size }).map((_, colIdx) => {
+              const letter = ['A', 'B', 'C', 'D', 'E', 'F'][colIdx];
+              const label = challenge.symbols_theme === 'secret_garden' ? `${letter} (C${colIdx + 1})` : `C${colIdx + 1}`;
+              return (
+                <div key={colIdx} className="w-14 sm:w-16 md:w-18 text-center text-[11px] sm:text-xs">
+                  {label}
+                </div>
+              );
+            })}
           </div>
 
           <div className="flex items-center">
@@ -435,7 +440,7 @@ export const SemidokuGame: React.FC<SemidokuGameProps> = ({
                   const inSameRow = selectedCell?.r === r;
                   const inSameCol = selectedCell?.c === c;
                   const conflict = hasConflict(r, c);
-                  const sym = symbols.find((s) => s.id === cellValue);
+                  const sym = allThemeSymbols.find((s) => s.id === cellValue);
                   const isDragOver = dragOverCell?.r === r && dragOverCell?.c === c;
 
                   return (
